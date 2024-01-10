@@ -1,9 +1,9 @@
 from MAACKTR import JointACKTR as MAACKTR
 from common.utils import agg_double_list, copy_file_akctr, init_dir
 
-import os
 import sys
 sys.path.append("../highway-env")
+import os
 import gym
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,13 +17,13 @@ import configparser
 def parse_args():
     """
     Description for this experiment:
-        + easy: maacktr
+        + medium: maacktr, regionalR
         + seed = 0
     """
     default_base_dir = "./results/"
     default_config_dir = 'configs/configs_acktr.ini'
     parser = argparse.ArgumentParser(description=('Train or evaluate policy on RL environment '
-                                                  'using MA2C'))
+                                                  'using maacktr'))
     parser.add_argument('--base-dir', type=str, required=False,
                         default=default_base_dir, help="experiment base dir")
     parser.add_argument('--option', type=str, required=False,
@@ -46,7 +46,7 @@ def train(args):
     config.read(config_dir)
 
     # create an experiment folder
-    now = datetime.utcnow().strftime("%b-%d_%H_%M_%S")
+    now = datetime.utcnow().strftime("%b_%d_%H_%M_%S")
     output_dir = base_dir + now
     dirs = init_dir(output_dir)
     copy_file_akctr(dirs['configs'])
@@ -109,7 +109,6 @@ def train(args):
     state_dim = env.n_s
     action_dim = env.n_a
     test_seeds = args.evaluation_seeds
-    best_eval_reward = -100
     maacktr = MAACKTR(env=env, memory_capacity=MEMORY_CAPACITY,
                       state_dim=state_dim, action_dim=action_dim,
                       batch_size=BATCH_SIZE, entropy_reg=ENTROPY_REG,
@@ -123,7 +122,7 @@ def train(args):
     # load the model if exist
     maacktr.load(model_dir, train_mode=True)
     env.seed = env.config['seed']
-    episodes = []
+    env.unwrapped.seed = env.config['seed']
     eval_rewards = []
     while maacktr.n_episodes < MAX_EPISODES:
         maacktr.interact()
@@ -133,18 +132,9 @@ def train(args):
             rewards, _, _, _ = maacktr.evaluation(env_eval, dirs['train_videos'], EVAL_EPISODES)
             rewards_mu, rewards_std = agg_double_list(rewards)
             print("Episode %d, Average Reward %.2f" % (maacktr.n_episodes + 1, rewards_mu))
-            episodes.append(maacktr.n_episodes + 1)
             eval_rewards.append(rewards_mu)
-            np.save(output_dir + '/{}'.format('episode_rewards'), np.array(maacktr.episode_rewards))
-            np.save(output_dir + '/{}'.format('eval_rewards'), np.array(eval_rewards))
-            np.save(output_dir + '/{}'.format('average_speed'), np.array(maacktr.average_speed))
             # save the model
-            if rewards_mu > best_eval_reward:
-                maacktr.save(dirs['models'], 100000)
-                maacktr.save(dirs['models'], maacktr.n_episodes + 1)
-                best_eval_reward = rewards_mu
-            else:
-                maacktr.save(dirs['models'], maacktr.n_episodes + 1)
+            maacktr.save(dirs['models'], maacktr.n_episodes + 1)
 
     # save the model
     maacktr.save(dirs['models'], MAX_EPISODES + 2)
@@ -166,7 +156,6 @@ def evaluate(args):
     config.read(config_dir)
 
     video_dir = args.model_dir + '/eval_videos'
-    eval_logs = args.model_dir + '/eval_logs'
 
     # model configs
     BATCH_SIZE = config.getint('MODEL_CONFIG', 'BATCH_SIZE')
@@ -218,21 +207,7 @@ def evaluate(args):
 
     # load the model if exist
     maacktr.load(model_dir, train_mode=False)
-    rewards, (vehicle_speed, vehicle_position), steps, avg_speeds = maacktr.evaluation(env, video_dir, len(seeds),
-                                                                                       is_train=False)
-    rewards_mu, rewards_std = agg_double_list(rewards)
-    success_rate = sum(np.array(steps) == 100) / len(steps)
-    avg_speeds_mu, avg_speeds_std = agg_double_list(avg_speeds)
-
-    print("Evaluation Reward and std %.2f, %.2f " % (rewards_mu, rewards_std))
-    print("Collision Rate %.2f" % (1 - success_rate))
-    print("Average Speed and std %.2f , %.2f " % (avg_speeds_mu, avg_speeds_std))
-
-    np.save(eval_logs + '/{}'.format('eval_rewards'), np.array(rewards))
-    np.save(eval_logs + '/{}'.format('eval_steps'), np.array(steps))
-    np.save(eval_logs + '/{}'.format('eval_avg_speeds'), np.array(avg_speeds))
-    np.save(eval_logs + '/{}'.format('vehicle_speed'), np.array(vehicle_speed))
-    np.save(eval_logs + '/{}'.format('vehicle_position'), np.array(vehicle_position))
+    rewards, _, steps, avg_speeds = maacktr.evaluation(env, video_dir, len(seeds), is_train=False)
 
 
 if __name__ == "__main__":

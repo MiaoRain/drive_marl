@@ -133,7 +133,7 @@ class KinematicObservation(ObservationType):
                  features_range: Dict[str, List[float]] = None,
                  absolute: bool = False,
                  order: str = "sorted",
-                 normalize: bool = True,
+                 normalize: bool = False, #rain
                  clip: bool = False,
                  see_behind: bool = True,
                  observe_intentions: bool = False,
@@ -196,7 +196,7 @@ class KinematicObservation(ObservationType):
             return np.zeros(self.space().shape)
 
         # Add ego-vehicle
-        df = pd.DataFrame.from_records([self.observer_vehicle.to_dict()])[self.features]
+        df = pd.DataFrame.from_records([self.observer_vehicle.to_dict()])[self.features]#['presence', 'x', 'y', 'vx', 'vy']
         # Add nearby traffic
         # sort = self.order == "sorted"
         close_vehicles = self.env.road.close_vehicles_to(self.observer_vehicle,

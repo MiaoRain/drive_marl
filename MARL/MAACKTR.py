@@ -35,7 +35,7 @@ class JointACKTR:
                  use_cuda=True, reward_type='global_R', traffic_density=1):
 
         assert traffic_density in [1, 2, 3]
-        assert reward_type in ["greedy", "regionalR", "global_R"]
+        assert reward_type in ["regionalR", "global_R"]
 
         self.env = env
         self.state_dim = state_dim
@@ -96,9 +96,7 @@ class JointACKTR:
             actions.append([index_to_one_hot(a, self.action_dim) for a in action])
             self.episode_rewards[-1] += global_reward
             self.epoch_steps[-1] += 1
-            if self.reward_type == "greedy":
-                reward = info["agents_rewards"]
-            elif self.reward_type == "regionalR":
+            if self.reward_type == "regionalR":
                 reward = info["regional_rewards"]
             elif self.reward_type == "global_R":
                 reward = [global_reward] * self.n_agents

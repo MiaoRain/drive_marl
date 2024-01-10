@@ -2,11 +2,10 @@ from MADQN import MADQN
 from single_agent.utils_common import agg_double_list
 
 import sys
+sys.path.append("../highway-env")
 import gym
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-sys.path.append("../highway-env")
 import highway_env
 
 MAX_EPISODES = 20000
@@ -46,7 +45,6 @@ def run():
     eval_rewards = []
     while madqn.n_episodes < MAX_EPISODES:
         madqn.interact()
-        print("madqn.n_episodes", madqn.n_episodes)
         if madqn.n_episodes >= EPISODES_BEFORE_TRAIN:
             madqn.train()
         if madqn.episode_done and ((madqn.n_episodes + 1) % EVAL_INTERVAL == 0):
@@ -55,8 +53,6 @@ def run():
             print("Episode %d, Average Reward %.2f" % (madqn.n_episodes + 1, rewards_mu))
             episodes.append(madqn.n_episodes + 1)
             eval_rewards.append(rewards_mu)
-            np.save('{}'.format('dqn_episode_rewards'), np.array(madqn.episode_rewards))
-            np.save('{}'.format('dqn_eval_rewards'), np.array(eval_rewards))
 
     episodes = np.array(episodes)
     eval_rewards = np.array(eval_rewards)

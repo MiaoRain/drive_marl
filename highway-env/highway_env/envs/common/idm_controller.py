@@ -75,7 +75,6 @@ def generate_actions(vehicle, env_copy):
     vehicle.action = action
     return action
 
-
 def follow_road(vehicle, env_copy):
     """At the end of a lane, automatically switch to a next one."""
     if env_copy.road.network.get_lane(vehicle.target_lane_index).after_end(vehicle.position):

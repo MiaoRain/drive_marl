@@ -89,11 +89,10 @@ class VideoRecorder:
 
 
 def copy_file(tar_dir):
-
-    env1 = '../highway-env/highway_env/envs/merge_env_v1.py'
-    copy(env1, tar_dir)
-    env2 = '../highway-env/highway_env/envs/common/abstract.py'
-    copy(env2, tar_dir)
+    # env = '.highway-env/envs/common/abstract.py'
+    # copy(env, tar_dir)
+    # env1 = '.highway_env/envs/merge_env_v1.py'
+    # copy(env1, tar_dir)
 
     env2 = 'configs/configs.ini'
     copy(env2, tar_dir)

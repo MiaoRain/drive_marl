@@ -14,9 +14,6 @@ MAX_STEERING_ANGLE = np.pi / 3  # [rad]
 DELTA_SPEED = 5  # [m/s]
 LENGTH = 5.0  # Vehicle length [m]
 MAX_SPEED = 40  # Maximum reachable speed [m/s]
-SPEED_COUNT: int = 5  # [], original = 3
-SPEED_MIN: float = 10  # [m/s]
-SPEED_MAX: float = 30  # [m/s]
 
 
 def mdp_controller(vehicle, env_copy, action):
@@ -33,22 +30,16 @@ def mdp_controller(vehicle, env_copy, action):
     follow_road(vehicle, env_copy)
     # "FASTER"
     if action == 3:
-        speed_index = speed_to_index(vehicle.speed) + 1
-        speed_index = int(np.clip(speed_index, 0, SPEED_COUNT - 1))
-        vehicle.target_speed = index_to_speed(speed_index)
+        vehicle.target_speed += DELTA_SPEED
     # "SLOWER"
     elif action == 4:
-        speed_index = speed_to_index(vehicle.speed) - 1
-        speed_index = int(np.clip(speed_index, 0, SPEED_COUNT - 1))
-        vehicle.target_speed = index_to_speed(speed_index)
-
+        vehicle.target_speed -= DELTA_SPEED
     # "LANE_RIGHT"
     elif action == 2:
         _from, _to, _id = vehicle.target_lane_index  # ('a', 'b', 0)
         target_lane_index = _from, _to, np.clip(_id + 1, 0, len(env_copy.road.network.graph[_from][_to]) - 1)
         if env_copy.road.network.get_lane(target_lane_index).is_reachable_from(vehicle.position):
             vehicle.target_lane_index = target_lane_index
-
     # "LANE_LEFT"
     elif action == 0:
         _from, _to, _id = vehicle.target_lane_index
@@ -71,30 +62,6 @@ def mdp_controller(vehicle, env_copy, action):
     vehicle.heading += vehicle.speed * np.sin(beta) / (LENGTH / 2) * dt
     vehicle.speed += action['acceleration'] * dt
     vehicle.trajectories.append([copy.deepcopy(vehicle.position), vehicle.heading, vehicle.speed])
-
-
-def speed_to_index(speed: float) -> int:
-        """
-        Find the index of the closest speed allowed to a given speed.
-
-        :param speed: an input speed [m/s]
-        :return: the index of the closest speed allowed []
-        """
-        x = (speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)
-        return np.int(np.clip(np.round(x * (SPEED_COUNT - 1)), 0, SPEED_COUNT - 1))
-
-
-def index_to_speed(index: int) -> float:
-    """
-    Convert an index among allowed speeds to its corresponding speed
-
-    :param index: the speed index []
-    :return: the corresponding speed [m/s]
-    """
-    if SPEED_COUNT > 1:
-        return SPEED_MIN + index * (SPEED_MAX - SPEED_MIN) / (SPEED_COUNT - 1)
-    else:
-        return SPEED_MIN
 
 
 def follow_road(vehicle, env_copy):

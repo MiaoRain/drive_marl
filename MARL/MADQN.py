@@ -33,7 +33,7 @@ class MADQN:
                  optimizer_type="rmsprop", entropy_reg=0.01,
                  max_grad_norm=0.5, batch_size=100, episodes_before_train=100,
                  epsilon_start=0.9, epsilon_end=0.01, epsilon_decay=200,
-                 use_cuda=True, target_update_freq=4, reward_type="greedy"):
+                 use_cuda=True, target_update_freq=4, reward_type="regionalR"):
         self.env = env
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -91,9 +91,7 @@ class MADQN:
         action = self.exploration_action(self.env_state)
         next_state, global_reward, done, info = self.env.step(tuple(action))
         self.episode_rewards[-1] += global_reward
-        if self.reward_type == "greedy":
-            reward = list(info["agents_rewards"])
-        elif self.reward_type == "regionalR":
+        if self.reward_type == "regionalR":
             reward = list(info["regional_rewards"])
         elif self.reward_type == "global_R":
             reward = [global_reward] * self.n_agents

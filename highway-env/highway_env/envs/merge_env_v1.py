@@ -55,17 +55,19 @@ class MergeEnv(AbstractEnv):
         })
         return config
 
-    def _reward(self, action: list) -> float:
+    def _reward(self, action: int) -> float:
         # Cooperative multi-agent reward
         return sum(self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles) \
                / len(self.controlled_vehicles)
 
     def _agent_reward(self, action: int, vehicle: Vehicle) -> float:
         """
-            The vehicle is rewarded for driving with high speed on lanes and avoiding collisions
+            The vehicle is rewarded for driving with high speed on lanes to the right and avoiding collisions
+            But an additional altruistic penalty is also suffered if any vehicle on the merging lane has a low speed.
             :param action: the action performed
             :return: the reward of the state-action transition
        """
+        # the optimal reward is 0
         scaled_speed = utils.lmap(vehicle.speed, self.config["reward_speed_range"], [0, 1])
         # compute cost for staying on the merging lane
         if vehicle.lane_index == ("b", "c", 1):
@@ -209,7 +211,7 @@ class MergeEnv(AbstractEnv):
 
     def _make_vehicles(self, num_CAV=4, num_HDV=3) -> None:
         """
-        Populate a road with several vehicles on the highway and on the merging lane, as well as the ego vehicles.
+        Populate a road with several vehicles on the highway and on the merging lane, as well as an ego-vehicle.
         :return: the ego-vehicle
         """
         road = self.road
@@ -233,7 +235,7 @@ class MergeEnv(AbstractEnv):
         for b in spawn_point_m_c:
             spawn_points_m.remove(b)
 
-        """Spawn points for HDVs"""
+        """Spawn points for HDV"""
         # spawn point indexes on the straight road
         spawn_point_s_h = np.random.choice(spawn_points_s, num_HDV // 2, replace=False)
         # spawn point indexes on the merging road
